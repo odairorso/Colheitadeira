@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Outfit } from "next/font/google"; // Fonte mais limpa e arredondada
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const outfit = Outfit({
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
-  title: "Gestão de Área - Fazenda",
-  description: "Sistema para lançamentos da Colheitadeira",
-  themeColor: "#171717",
+  title: "Colheitadeira Web",
+  description: "Gerencie receitas e despesas da sua colheitadeira de forma prática e rápida.",
 };
 
 export default function RootLayout({
@@ -17,7 +18,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${inter.className} bg-neutral-900 antialiased`}>{children}</body>
+      <body className={`${outfit.className} antialiased bg-black selection:bg-emerald-500/30`}>
+        {children}
+      </body>
     </html>
   );
 }
