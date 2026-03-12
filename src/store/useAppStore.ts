@@ -40,7 +40,7 @@ function mapLancamento(r: any): Lancamento {
   return { id: r.id, tipo: r.tipo, categoria: r.categoria, descricao: r.descricao || "", valor: Number(r.valor), data: r.data, talhaoId: r.talhao_id || undefined, empresaId: r.empresa_id || undefined, produtorId: r.produtor_id || undefined, createdAt: r.created_at };
 }
 function mapColheita(r: any): Colheita {
-  return { id: r.id, talhaoId: r.talhao_id || "", produtorId: r.produtor_id || undefined, data: r.data, quantidade: Number(r.quantidade), unidade: r.unidade, umidade: Number(r.umidade) || 0, cultura: r.cultura, valorSaca: r.valor_saca ? Number(r.valor_saca) : undefined, observacoes: r.observacoes || "", createdAt: r.created_at };
+  return { id: r.id, talhaoId: r.talhao_id || "", produtorId: r.produtor_id || undefined, data: r.data, quantidade: Number(r.quantidade), unidade: r.unidade, umidade: Number(r.umidade) || 0, cultura: r.cultura, valorSaca: r.valor_saca ? Number(r.valor_saca) : undefined, hectares: r.hectares ? Number(r.hectares) : undefined, observacoes: r.observacoes || "", createdAt: r.created_at };
 }
 
 // ---- HOOKS ----

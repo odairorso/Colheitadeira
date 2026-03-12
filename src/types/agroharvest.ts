@@ -52,6 +52,7 @@ export interface Colheita {
   umidade: number;
   cultura: string;
   valorSaca?: number;
+  hectares?: number;
   observacoes: string;
   createdAt: string;
 }

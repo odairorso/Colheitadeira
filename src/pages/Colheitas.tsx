@@ -23,6 +23,7 @@ const emptyForm = {
   umidade: "",
   cultura: "",
   valorSaca: "",
+  hectares: "",
   observacoes: "",
 };
 
@@ -53,6 +54,7 @@ const ColheitasPage = () => {
       umidade: c.umidade ? String(c.umidade) : "",
       cultura: c.cultura,
       valorSaca: c.valorSaca ? String(c.valorSaca) : "",
+      hectares: c.hectares ? String(c.hectares) : "",
       observacoes: c.observacoes || "",
     });
     setOpen(true);
@@ -77,6 +79,7 @@ const ColheitasPage = () => {
         umidade: form.umidade ? parseFloat(form.umidade) : 0,
         cultura: form.cultura,
         valorSaca: form.valorSaca ? parseFloat(form.valorSaca) : undefined,
+        hectares: form.hectares ? parseFloat(form.hectares) : undefined,
         observacoes: form.observacoes,
       });
       toast.success("Colheita atualizada!");
@@ -91,6 +94,7 @@ const ColheitasPage = () => {
         umidade: form.umidade ? parseFloat(form.umidade) : 0,
         cultura: form.cultura,
         valorSaca: form.valorSaca ? parseFloat(form.valorSaca) : undefined,
+        hectares: form.hectares ? parseFloat(form.hectares) : undefined,
         observacoes: form.observacoes,
         createdAt: new Date().toISOString(),
       });
@@ -142,7 +146,7 @@ const ColheitasPage = () => {
                     </Select>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label>Umidade (%)</Label>
                     <Input type="number" step="0.1" value={form.umidade} onChange={(e) => setForm({ ...form, umidade: e.target.value })} placeholder="Ex: 14.5" />
@@ -150,6 +154,10 @@ const ColheitasPage = () => {
                   <div>
                     <Label>Valor da Saca (R$)</Label>
                     <Input type="number" step="0.01" value={form.valorSaca} onChange={(e) => setForm({ ...form, valorSaca: e.target.value })} placeholder="Ex: 125.00" />
+                  </div>
+                  <div>
+                    <Label>Hectares</Label>
+                    <Input type="number" step="0.01" value={form.hectares} onChange={(e) => setForm({ ...form, hectares: e.target.value })} placeholder="Ex: 50" />
                   </div>
                 </div>
                 <div>
@@ -211,6 +219,7 @@ const ColheitasPage = () => {
                   <TableHead>Quantidade</TableHead>
                   <TableHead>Valor Saca</TableHead>
                   <TableHead>Total (R$)</TableHead>
+                  <TableHead>Hectares</TableHead>
                   <TableHead>Umidade</TableHead>
                   <TableHead>Talhão</TableHead>
                   <TableHead>Produtor</TableHead>
@@ -227,6 +236,7 @@ const ColheitasPage = () => {
                     <TableCell className="font-semibold text-success">
                       {c.valorSaca ? `R$ ${(c.quantidade * c.valorSaca).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}
                     </TableCell>
+                    <TableCell>{c.hectares ? c.hectares.toLocaleString("pt-BR") + " ha" : "—"}</TableCell>
                     <TableCell>{c.umidade ? `${c.umidade}%` : "—"}</TableCell>
                     <TableCell>{talhaoNome(c.talhaoId)}</TableCell>
                     <TableCell>{produtorNome(c.produtorId)}</TableCell>
