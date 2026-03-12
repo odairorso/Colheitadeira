@@ -8,8 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Wheat, Pencil } from "lucide-react";
-import { useColheitas, useTalhoes, useProdutores } from "@/store/useAppStore";
+import { Plus, Trash2, Wheat, Pencil, DollarSign } from "lucide-react";
+import { useColheitas, useTalhoes, useProdutores, useLancamentos } from "@/store/useAppStore";
 import { UNIDADES_COLHEITA } from "@/types/agroharvest";
 import type { Colheita } from "@/types/agroharvest";
 import { toast } from "sonner";
@@ -30,6 +30,7 @@ const ColheitasPage = () => {
   const { colheitas, addColheita, removeColheita, updateColheita } = useColheitas();
   const { talhoes } = useTalhoes();
   const { produtores } = useProdutores();
+  const { addLancamento } = useLancamentos();
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -231,6 +232,30 @@ const ColheitasPage = () => {
                     <TableCell>{produtorNome(c.produtorId)}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
+                        {c.valorSaca && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Gerar Receita"
+                            onClick={async () => {
+                              const total = c.quantidade * c.valorSaca!;
+                              await addLancamento({
+                                id: crypto.randomUUID(),
+                                tipo: "receita",
+                                categoria: "Venda de grãos",
+                                descricao: `${c.cultura} - ${c.quantidade} ${unidadeLabel(c.unidade)} x R$ ${c.valorSaca!.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+                                valor: total,
+                                data: c.data,
+                                talhaoId: c.talhaoId || undefined,
+                                produtorId: c.produtorId || undefined,
+                                createdAt: new Date().toISOString(),
+                              });
+                              toast.success(`Receita de R$ ${total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} gerada!`);
+                            }}
+                          >
+                            <DollarSign className="h-4 w-4 text-green-600" />
+                          </Button>
+                        )}
                         <Button variant="ghost" size="icon" onClick={() => openEdit(c)}>
                           <Pencil className="h-4 w-4 text-primary" />
                         </Button>
