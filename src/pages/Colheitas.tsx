@@ -152,8 +152,8 @@ const ColheitasPage = () => {
                     <Input type="number" step="0.1" value={form.umidade} onChange={(e) => setForm({ ...form, umidade: e.target.value })} placeholder="Ex: 14.5" />
                   </div>
                   <div>
-                    <Label>Valor da Saca (R$)</Label>
-                    <Input type="number" step="0.01" value={form.valorSaca} onChange={(e) => setForm({ ...form, valorSaca: e.target.value })} placeholder="Ex: 125.00" />
+                    <Label>{form.unidade === "hectares" ? "Valor por Hectare (R$)" : "Valor da Saca (R$)"}</Label>
+                    <Input type="number" step="0.01" value={form.valorSaca} onChange={(e) => setForm({ ...form, valorSaca: e.target.value })} placeholder={form.unidade === "hectares" ? "Ex: 250.00" : "Ex: 125.00"} />
                   </div>
                   <div>
                     <Label>Hectares</Label>
@@ -217,7 +217,7 @@ const ColheitasPage = () => {
                   <TableHead>Data</TableHead>
                   <TableHead>Cultura</TableHead>
                   <TableHead>Quantidade</TableHead>
-                  <TableHead>Valor Saca</TableHead>
+                  <TableHead>Vlr. Unitário</TableHead>
                   <TableHead>Total (R$)</TableHead>
                   <TableHead>Hectares</TableHead>
                   <TableHead>Umidade</TableHead>

@@ -48,7 +48,7 @@ export interface Colheita {
   produtorId?: string;
   data: string;
   quantidade: number;
-  unidade: "sacas" | "toneladas" | "kg" | "arrobas";
+  unidade: "sacas" | "toneladas" | "kg" | "arrobas" | "hectares";
   umidade: number;
   cultura: string;
   valorSaca?: number;
@@ -88,4 +88,5 @@ export const UNIDADES_COLHEITA = [
   { value: "toneladas", label: "Toneladas" },
   { value: "kg", label: "Quilogramas" },
   { value: "arrobas", label: "Arrobas" },
+  { value: "hectares", label: "Hectares (ha)" },
 ];
