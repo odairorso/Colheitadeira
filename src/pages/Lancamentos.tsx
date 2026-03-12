@@ -9,50 +9,97 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Receipt } from "lucide-react";
+import { Plus, Trash2, Receipt, Pencil } from "lucide-react";
 import { useLancamentos, useTalhoes, useEmpresas, useProdutores } from "@/store/useAppStore";
 import { CATEGORIAS_RECEITA, CATEGORIAS_DESPESA } from "@/types/agroharvest";
 import type { Lancamento } from "@/types/agroharvest";
 import { toast } from "sonner";
 
+const emptyForm = {
+  tipo: "despesa" as "receita" | "despesa",
+  categoria: "",
+  descricao: "",
+  valor: "",
+  data: new Date().toISOString().split("T")[0],
+  talhaoId: "",
+  empresaId: "",
+  produtorId: "",
+};
+
 const LancamentosPage = () => {
-  const { lancamentos, addLancamento, removeLancamento } = useLancamentos();
+  const { lancamentos, addLancamento, removeLancamento, updateLancamento } = useLancamentos();
   const { talhoes } = useTalhoes();
   const { empresas } = useEmpresas();
   const { produtores } = useProdutores();
+
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    tipo: "despesa" as "receita" | "despesa",
-    categoria: "",
-    descricao: "",
-    valor: "",
-    data: new Date().toISOString().split("T")[0],
-    talhaoId: "",
-    empresaId: "",
-    produtorId: "",
-  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
 
   const categorias = form.tipo === "receita" ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
 
+  const openNew = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setOpen(true);
+  };
+
+  const openEdit = (l: Lancamento) => {
+    setEditingId(l.id);
+    setForm({
+      tipo: l.tipo,
+      categoria: l.categoria,
+      descricao: l.descricao || "",
+      valor: String(l.valor),
+      data: l.data,
+      talhaoId: l.talhaoId || "",
+      empresaId: l.empresaId || "",
+      produtorId: l.produtorId || "",
+    });
+    setOpen(true);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.categoria || !form.valor) { toast.error("Categoria e valor são obrigatórios"); return; }
-    const lancamento: Lancamento = {
-      id: crypto.randomUUID(),
-      tipo: form.tipo,
-      categoria: form.categoria,
-      descricao: form.descricao,
-      valor: parseFloat(form.valor),
-      data: form.data,
-      talhaoId: form.talhaoId || undefined,
-      empresaId: form.empresaId || undefined,
-      produtorId: form.produtorId || undefined,
-      createdAt: new Date().toISOString(),
-    };
-    addLancamento(lancamento);
-    setForm({ tipo: "despesa", categoria: "", descricao: "", valor: "", data: new Date().toISOString().split("T")[0], talhaoId: "", empresaId: "", produtorId: "" });
+    if (!form.categoria || !form.valor) {
+      toast.error("Categoria e valor são obrigatórios");
+      return;
+    }
+
+    if (editingId) {
+      const original = lancamentos.find((l) => l.id === editingId)!;
+      updateLancamento({
+        ...original,
+        tipo: form.tipo,
+        categoria: form.categoria,
+        descricao: form.descricao,
+        valor: parseFloat(form.valor),
+        data: form.data,
+        talhaoId: form.talhaoId || undefined,
+        empresaId: form.empresaId || undefined,
+        produtorId: form.produtorId || undefined,
+      });
+      toast.success("Lançamento atualizado!");
+    } else {
+      const lancamento: Lancamento = {
+        id: crypto.randomUUID(),
+        tipo: form.tipo,
+        categoria: form.categoria,
+        descricao: form.descricao,
+        valor: parseFloat(form.valor),
+        data: form.data,
+        talhaoId: form.talhaoId || undefined,
+        empresaId: form.empresaId || undefined,
+        produtorId: form.produtorId || undefined,
+        createdAt: new Date().toISOString(),
+      };
+      addLancamento(lancamento);
+      toast.success("Lançamento registrado!");
+    }
+
+    setForm(emptyForm);
     setOpen(false);
-    toast.success("Lançamento registrado!");
+    setEditingId(null);
   };
 
   return (
@@ -61,12 +108,14 @@ const LancamentosPage = () => {
         title="Lançamentos"
         description="Receitas e despesas da operação"
         action={
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setEditingId(null); setForm(emptyForm); } }}>
             <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" />Novo Lançamento</Button>
+              <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" />Novo Lançamento</Button>
             </DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
-              <DialogHeader><DialogTitle>Registrar Lançamento</DialogTitle></DialogHeader>
+              <DialogHeader>
+                <DialogTitle>{editingId ? "Editar Lançamento" : "Registrar Lançamento"}</DialogTitle>
+              </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <Label>Tipo *</Label>
@@ -140,7 +189,7 @@ const LancamentosPage = () => {
                     </Select>
                   </div>
                 )}
-                <Button type="submit" className="w-full">Salvar</Button>
+                <Button type="submit" className="w-full">{editingId ? "Salvar Alterações" : "Salvar"}</Button>
               </form>
             </DialogContent>
           </Dialog>
@@ -165,7 +214,7 @@ const LancamentosPage = () => {
                   <TableHead>Categoria</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
-                  <TableHead className="w-12"></TableHead>
+                  <TableHead className="w-24"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -183,9 +232,14 @@ const LancamentosPage = () => {
                       R$ {l.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => { removeLancamento(l.id); toast.success("Lançamento removido"); }}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(l)}>
+                          <Pencil className="h-4 w-4 text-primary" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => { removeLancamento(l.id); toast.success("Lançamento removido"); }}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

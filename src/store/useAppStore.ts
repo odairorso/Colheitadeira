@@ -108,7 +108,15 @@ export function useLancamentos() {
     });
   }, []);
 
-  return { lancamentos, addLancamento, removeLancamento };
+  const updateLancamento = useCallback((updated: Lancamento) => {
+    setLancamentos((prev) => {
+      const next = prev.map((l) => (l.id === updated.id ? updated : l));
+      saveToStorage("agroharvest_lancamentos", next);
+      return next;
+    });
+  }, []);
+
+  return { lancamentos, addLancamento, removeLancamento, updateLancamento };
 }
 
 export function useColheitas() {
@@ -132,5 +140,13 @@ export function useColheitas() {
     });
   }, []);
 
-  return { colheitas, addColheita, removeColheita };
+  const updateColheita = useCallback((updated: Colheita) => {
+    setColheitas((prev) => {
+      const next = prev.map((c) => (c.id === updated.id ? updated : c));
+      saveToStorage("agroharvest_colheitas", next);
+      return next;
+    });
+  }, []);
+
+  return { colheitas, addColheita, removeColheita, updateColheita };
 }

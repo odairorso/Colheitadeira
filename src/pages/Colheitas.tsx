@@ -8,48 +8,97 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Wheat } from "lucide-react";
+import { Plus, Trash2, Wheat, Pencil } from "lucide-react";
 import { useColheitas, useTalhoes, useProdutores } from "@/store/useAppStore";
 import { UNIDADES_COLHEITA } from "@/types/agroharvest";
 import type { Colheita } from "@/types/agroharvest";
 import { toast } from "sonner";
 
+const emptyForm = {
+  talhaoId: "",
+  produtorId: "",
+  data: new Date().toISOString().split("T")[0],
+  quantidade: "",
+  unidade: "sacas" as Colheita["unidade"],
+  umidade: "",
+  cultura: "",
+  valorSaca: "",
+  observacoes: "",
+};
+
 const ColheitasPage = () => {
-  const { colheitas, addColheita, removeColheita } = useColheitas();
+  const { colheitas, addColheita, removeColheita, updateColheita } = useColheitas();
   const { talhoes } = useTalhoes();
   const { produtores } = useProdutores();
+
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    talhaoId: "",
-    produtorId: "",
-    data: new Date().toISOString().split("T")[0],
-    quantidade: "",
-    unidade: "sacas" as Colheita["unidade"],
-    umidade: "",
-    cultura: "",
-    valorSaca: "",
-    observacoes: "",
-  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
+
+  const openNew = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setOpen(true);
+  };
+
+  const openEdit = (c: Colheita) => {
+    setEditingId(c.id);
+    setForm({
+      talhaoId: c.talhaoId || "",
+      produtorId: c.produtorId || "",
+      data: c.data,
+      quantidade: String(c.quantidade),
+      unidade: c.unidade,
+      umidade: c.umidade ? String(c.umidade) : "",
+      cultura: c.cultura,
+      valorSaca: c.valorSaca ? String(c.valorSaca) : "",
+      observacoes: c.observacoes || "",
+    });
+    setOpen(true);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.quantidade || !form.cultura) { toast.error("Quantidade e cultura são obrigatórios"); return; }
-    addColheita({
-      id: crypto.randomUUID(),
-      talhaoId: form.talhaoId,
-      produtorId: form.produtorId || undefined,
-      data: form.data,
-      quantidade: parseFloat(form.quantidade),
-      unidade: form.unidade,
-      umidade: form.umidade ? parseFloat(form.umidade) : 0,
-      cultura: form.cultura,
-      valorSaca: form.valorSaca ? parseFloat(form.valorSaca) : undefined,
-      observacoes: form.observacoes,
-      createdAt: new Date().toISOString(),
-    });
-    setForm({ talhaoId: "", produtorId: "", data: new Date().toISOString().split("T")[0], quantidade: "", unidade: "sacas", umidade: "", cultura: "", valorSaca: "", observacoes: "" });
+    if (!form.quantidade || !form.cultura) {
+      toast.error("Quantidade e cultura são obrigatórios");
+      return;
+    }
+
+    if (editingId) {
+      const original = colheitas.find((c) => c.id === editingId)!;
+      updateColheita({
+        ...original,
+        talhaoId: form.talhaoId,
+        produtorId: form.produtorId || undefined,
+        data: form.data,
+        quantidade: parseFloat(form.quantidade),
+        unidade: form.unidade,
+        umidade: form.umidade ? parseFloat(form.umidade) : 0,
+        cultura: form.cultura,
+        valorSaca: form.valorSaca ? parseFloat(form.valorSaca) : undefined,
+        observacoes: form.observacoes,
+      });
+      toast.success("Colheita atualizada!");
+    } else {
+      addColheita({
+        id: crypto.randomUUID(),
+        talhaoId: form.talhaoId,
+        produtorId: form.produtorId || undefined,
+        data: form.data,
+        quantidade: parseFloat(form.quantidade),
+        unidade: form.unidade,
+        umidade: form.umidade ? parseFloat(form.umidade) : 0,
+        cultura: form.cultura,
+        valorSaca: form.valorSaca ? parseFloat(form.valorSaca) : undefined,
+        observacoes: form.observacoes,
+        createdAt: new Date().toISOString(),
+      });
+      toast.success("Colheita registrada!");
+    }
+
+    setForm(emptyForm);
     setOpen(false);
-    toast.success("Colheita registrada!");
+    setEditingId(null);
   };
 
   const talhaoNome = (id: string) => talhoes.find((t) => t.id === id)?.nome || "—";
@@ -62,12 +111,14 @@ const ColheitasPage = () => {
         title="Colheitas"
         description="Registro de colheitas por talhão e produtor"
         action={
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setEditingId(null); setForm(emptyForm); } }}>
             <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" />Nova Colheita</Button>
+              <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" />Nova Colheita</Button>
             </DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
-              <DialogHeader><DialogTitle>Registrar Colheita</DialogTitle></DialogHeader>
+              <DialogHeader>
+                <DialogTitle>{editingId ? "Editar Colheita" : "Registrar Colheita"}</DialogTitle>
+              </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <Label>Cultura *</Label>
@@ -134,7 +185,7 @@ const ColheitasPage = () => {
                   <Label>Observações</Label>
                   <Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
                 </div>
-                <Button type="submit" className="w-full">Salvar</Button>
+                <Button type="submit" className="w-full">{editingId ? "Salvar Alterações" : "Salvar"}</Button>
               </form>
             </DialogContent>
           </Dialog>
@@ -162,7 +213,7 @@ const ColheitasPage = () => {
                   <TableHead>Umidade</TableHead>
                   <TableHead>Talhão</TableHead>
                   <TableHead>Produtor</TableHead>
-                  <TableHead className="w-12"></TableHead>
+                  <TableHead className="w-24"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -179,9 +230,14 @@ const ColheitasPage = () => {
                     <TableCell>{talhaoNome(c.talhaoId)}</TableCell>
                     <TableCell>{produtorNome(c.produtorId)}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => { removeColheita(c.id); toast.success("Colheita removida"); }}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(c)}>
+                          <Pencil className="h-4 w-4 text-primary" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => { removeColheita(c.id); toast.success("Colheita removida"); }}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
