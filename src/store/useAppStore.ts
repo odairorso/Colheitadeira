@@ -1,160 +1,101 @@
-import { useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Produtor, Empresa, Talhao, Lancamento, Colheita } from "@/types/agroharvest";
 
-// Simple hook-based store using localStorage
-function loadFromStorage<T>(key: string, fallback: T[]): T[] {
-  try {
-    const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : fallback;
-  } catch {
-    return fallback;
-  }
+// Generic fetch helpers
+async function fetchJson<T>(url: string): Promise<T[]> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Erro ao carregar dados");
+  return res.json();
 }
 
-function saveToStorage<T>(key: string, data: T[]) {
-  localStorage.setItem(key, JSON.stringify(data));
+async function postJson(url: string, body: unknown) {
+  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!res.ok) throw new Error("Erro ao salvar");
+  return res.json();
 }
+
+async function putJson(url: string, body: unknown) {
+  const res = await fetch(url, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!res.ok) throw new Error("Erro ao atualizar");
+  return res.json();
+}
+
+async function deleteJson(url: string, id: string) {
+  const res = await fetch(url, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+  if (!res.ok) throw new Error("Erro ao remover");
+  return res.json();
+}
+
+// ---- mappers: DB snake_case → frontend camelCase ----
+function mapProdutor(r: any): Produtor {
+  return { id: r.id, nome: r.nome, telefone: r.telefone || "", endereco: r.endereco || "", observacoes: r.observacoes || "", createdAt: r.created_at };
+}
+function mapEmpresa(r: any): Empresa {
+  return { id: r.id, nome: r.nome, tipo: r.tipo, telefone: r.telefone || "", endereco: r.endereco || "", cidade: r.cidade || "", estado: r.estado || "", observacoes: r.observacoes || "", createdAt: r.created_at };
+}
+function mapTalhao(r: any): Talhao {
+  return { id: r.id, nome: r.nome, area_hectares: Number(r.area_hectares) || 0, cultura: r.cultura || "", safra: r.safra || "", observacoes: r.observacoes || "", createdAt: r.created_at };
+}
+function mapLancamento(r: any): Lancamento {
+  return { id: r.id, tipo: r.tipo, categoria: r.categoria, descricao: r.descricao || "", valor: Number(r.valor), data: r.data, talhaoId: r.talhao_id || undefined, empresaId: r.empresa_id || undefined, produtorId: r.produtor_id || undefined, createdAt: r.created_at };
+}
+function mapColheita(r: any): Colheita {
+  return { id: r.id, talhaoId: r.talhao_id || "", produtorId: r.produtor_id || undefined, data: r.data, quantidade: Number(r.quantidade), unidade: r.unidade, umidade: Number(r.umidade) || 0, cultura: r.cultura, valorSaca: r.valor_saca ? Number(r.valor_saca) : undefined, observacoes: r.observacoes || "", createdAt: r.created_at };
+}
+
+// ---- HOOKS ----
 
 export function useProdutores() {
-  const [produtores, setProdutores] = useState<Produtor[]>(() =>
-    loadFromStorage<Produtor>("agroharvest_produtores", [])
-  );
+  const qc = useQueryClient();
+  const { data: produtores = [], isLoading } = useQuery({ queryKey: ["produtores"], queryFn: async () => (await fetchJson<any>("/api/produtores")).map(mapProdutor) });
 
-  const addProdutor = useCallback((p: Produtor) => {
-    setProdutores((prev) => {
-      const next = [...prev, p];
-      saveToStorage("agroharvest_produtores", next);
-      return next;
-    });
-  }, []);
+  const addProdutor = async (p: Produtor) => { await postJson("/api/produtores", p); qc.invalidateQueries({ queryKey: ["produtores"] }); };
+  const removeProdutor = async (id: string) => { await deleteJson("/api/produtores", id); qc.invalidateQueries({ queryKey: ["produtores"] }); };
+  const updateProdutor = async (p: Produtor) => { await putJson("/api/produtores", p); qc.invalidateQueries({ queryKey: ["produtores"] }); };
 
-  const removeProdutor = useCallback((id: string) => {
-    setProdutores((prev) => {
-      const next = prev.filter((p) => p.id !== id);
-      saveToStorage("agroharvest_produtores", next);
-      return next;
-    });
-  }, []);
-
-  return { produtores, addProdutor, removeProdutor };
+  return { produtores, isLoading, addProdutor, removeProdutor, updateProdutor };
 }
 
 export function useEmpresas() {
-  const [empresas, setEmpresas] = useState<Empresa[]>(() =>
-    loadFromStorage<Empresa>("agroharvest_empresas", [])
-  );
+  const qc = useQueryClient();
+  const { data: empresas = [], isLoading } = useQuery({ queryKey: ["empresas"], queryFn: async () => (await fetchJson<any>("/api/empresas")).map(mapEmpresa) });
 
-  const addEmpresa = useCallback((e: Empresa) => {
-    setEmpresas((prev) => {
-      const next = [...prev, e];
-      saveToStorage("agroharvest_empresas", next);
-      return next;
-    });
-  }, []);
+  const addEmpresa = async (e: Empresa) => { await postJson("/api/empresas", e); qc.invalidateQueries({ queryKey: ["empresas"] }); };
+  const removeEmpresa = async (id: string) => { await deleteJson("/api/empresas", id); qc.invalidateQueries({ queryKey: ["empresas"] }); };
+  const updateEmpresa = async (e: Empresa) => { await putJson("/api/empresas", e); qc.invalidateQueries({ queryKey: ["empresas"] }); };
 
-  const removeEmpresa = useCallback((id: string) => {
-    setEmpresas((prev) => {
-      const next = prev.filter((e) => e.id !== id);
-      saveToStorage("agroharvest_empresas", next);
-      return next;
-    });
-  }, []);
-
-  const updateEmpresa = useCallback((updated: Empresa) => {
-    setEmpresas((prev) => {
-      const next = prev.map((e) => (e.id === updated.id ? updated : e));
-      saveToStorage("agroharvest_empresas", next);
-      return next;
-    });
-  }, []);
-
-  return { empresas, addEmpresa, removeEmpresa, updateEmpresa };
+  return { empresas, isLoading, addEmpresa, removeEmpresa, updateEmpresa };
 }
 
 export function useTalhoes() {
-  const [talhoes, setTalhoes] = useState<Talhao[]>(() =>
-    loadFromStorage<Talhao>("agroharvest_talhoes", [])
-  );
+  const qc = useQueryClient();
+  const { data: talhoes = [], isLoading } = useQuery({ queryKey: ["talhoes"], queryFn: async () => (await fetchJson<any>("/api/talhoes")).map(mapTalhao) });
 
-  const addTalhao = useCallback((t: Talhao) => {
-    setTalhoes((prev) => {
-      const next = [...prev, t];
-      saveToStorage("agroharvest_talhoes", next);
-      return next;
-    });
-  }, []);
+  const addTalhao = async (t: Talhao) => { await postJson("/api/talhoes", t); qc.invalidateQueries({ queryKey: ["talhoes"] }); };
+  const removeTalhao = async (id: string) => { await deleteJson("/api/talhoes", id); qc.invalidateQueries({ queryKey: ["talhoes"] }); };
+  const updateTalhao = async (t: Talhao) => { await putJson("/api/talhoes", t); qc.invalidateQueries({ queryKey: ["talhoes"] }); };
 
-  const removeTalhao = useCallback((id: string) => {
-    setTalhoes((prev) => {
-      const next = prev.filter((t) => t.id !== id);
-      saveToStorage("agroharvest_talhoes", next);
-      return next;
-    });
-  }, []);
-
-  return { talhoes, addTalhao, removeTalhao };
+  return { talhoes, isLoading, addTalhao, removeTalhao, updateTalhao };
 }
 
 export function useLancamentos() {
-  const [lancamentos, setLancamentos] = useState<Lancamento[]>(() =>
-    loadFromStorage<Lancamento>("agroharvest_lancamentos", [])
-  );
+  const qc = useQueryClient();
+  const { data: lancamentos = [], isLoading } = useQuery({ queryKey: ["lancamentos"], queryFn: async () => (await fetchJson<any>("/api/lancamentos")).map(mapLancamento) });
 
-  const addLancamento = useCallback((l: Lancamento) => {
-    setLancamentos((prev) => {
-      const next = [...prev, l];
-      saveToStorage("agroharvest_lancamentos", next);
-      return next;
-    });
-  }, []);
+  const addLancamento = async (l: Lancamento) => { await postJson("/api/lancamentos", l); qc.invalidateQueries({ queryKey: ["lancamentos"] }); };
+  const removeLancamento = async (id: string) => { await deleteJson("/api/lancamentos", id); qc.invalidateQueries({ queryKey: ["lancamentos"] }); };
+  const updateLancamento = async (l: Lancamento) => { await putJson("/api/lancamentos", l); qc.invalidateQueries({ queryKey: ["lancamentos"] }); };
 
-  const removeLancamento = useCallback((id: string) => {
-    setLancamentos((prev) => {
-      const next = prev.filter((l) => l.id !== id);
-      saveToStorage("agroharvest_lancamentos", next);
-      return next;
-    });
-  }, []);
-
-  const updateLancamento = useCallback((updated: Lancamento) => {
-    setLancamentos((prev) => {
-      const next = prev.map((l) => (l.id === updated.id ? updated : l));
-      saveToStorage("agroharvest_lancamentos", next);
-      return next;
-    });
-  }, []);
-
-  return { lancamentos, addLancamento, removeLancamento, updateLancamento };
+  return { lancamentos, isLoading, addLancamento, removeLancamento, updateLancamento };
 }
 
 export function useColheitas() {
-  const [colheitas, setColheitas] = useState<Colheita[]>(() =>
-    loadFromStorage<Colheita>("agroharvest_colheitas", [])
-  );
+  const qc = useQueryClient();
+  const { data: colheitas = [], isLoading } = useQuery({ queryKey: ["colheitas"], queryFn: async () => (await fetchJson<any>("/api/colheitas")).map(mapColheita) });
 
-  const addColheita = useCallback((c: Colheita) => {
-    setColheitas((prev) => {
-      const next = [...prev, c];
-      saveToStorage("agroharvest_colheitas", next);
-      return next;
-    });
-  }, []);
+  const addColheita = async (c: Colheita) => { await postJson("/api/colheitas", c); qc.invalidateQueries({ queryKey: ["colheitas"] }); };
+  const removeColheita = async (id: string) => { await deleteJson("/api/colheitas", id); qc.invalidateQueries({ queryKey: ["colheitas"] }); };
+  const updateColheita = async (c: Colheita) => { await putJson("/api/colheitas", c); qc.invalidateQueries({ queryKey: ["colheitas"] }); };
 
-  const removeColheita = useCallback((id: string) => {
-    setColheitas((prev) => {
-      const next = prev.filter((c) => c.id !== id);
-      saveToStorage("agroharvest_colheitas", next);
-      return next;
-    });
-  }, []);
-
-  const updateColheita = useCallback((updated: Colheita) => {
-    setColheitas((prev) => {
-      const next = prev.map((c) => (c.id === updated.id ? updated : c));
-      saveToStorage("agroharvest_colheitas", next);
-      return next;
-    });
-  }, []);
-
-  return { colheitas, addColheita, removeColheita, updateColheita };
+  return { colheitas, isLoading, addColheita, removeColheita, updateColheita };
 }

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Receipt, Pencil } from "lucide-react";
+import { Plus, Trash2, Receipt, Pencil, TrendingUp, TrendingDown, Scale } from "lucide-react";
 import { useLancamentos, useTalhoes, useEmpresas, useProdutores } from "@/store/useAppStore";
 import { CATEGORIAS_RECEITA, CATEGORIAS_DESPESA } from "@/types/agroharvest";
 import type { Lancamento } from "@/types/agroharvest";
@@ -26,8 +26,14 @@ const emptyForm = {
   produtorId: "",
 };
 
+const fmt = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+
 const LancamentosPage = () => {
   const { lancamentos, addLancamento, removeLancamento, updateLancamento } = useLancamentos();
+
+  const totalReceitas = lancamentos.filter((l) => l.tipo === "receita").reduce((s, l) => s + l.valor, 0);
+  const totalDespesas = lancamentos.filter((l) => l.tipo === "despesa").reduce((s, l) => s + l.valor, 0);
+  const saldo = totalReceitas - totalDespesas;
   const { talhoes } = useTalhoes();
   const { empresas } = useEmpresas();
   const { produtores } = useProdutores();
@@ -195,6 +201,37 @@ const LancamentosPage = () => {
           </Dialog>
         }
       />
+
+      {/* Cards de Totais */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <Card>
+          <CardContent className="pt-6 pb-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Receitas</p>
+              <p className="text-2xl font-bold text-green-600">R$ {fmt(totalReceitas)}</p>
+            </div>
+            <TrendingUp className="h-8 w-8 text-green-500 opacity-60" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6 pb-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Despesas</p>
+              <p className="text-2xl font-bold text-red-600">R$ {fmt(totalDespesas)}</p>
+            </div>
+            <TrendingDown className="h-8 w-8 text-red-500 opacity-60" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6 pb-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Saldo</p>
+              <p className={`text-2xl font-bold ${saldo >= 0 ? "text-green-600" : "text-red-600"}`}>R$ {fmt(saldo)}</p>
+            </div>
+            <Scale className="h-8 w-8 text-primary opacity-60" />
+          </CardContent>
+        </Card>
+      </div>
 
       {lancamentos.length === 0 ? (
         <Card>

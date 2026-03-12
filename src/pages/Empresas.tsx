@@ -31,7 +31,7 @@ const emptyForm = {
 };
 
 const EmpresasPage = () => {
-  const { empresas, addEmpresa, removeEmpresa, updateEmpresa } = useEmpresas() as any;
+  const { empresas, addEmpresa, removeEmpresa, updateEmpresa } = useEmpresas();
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
