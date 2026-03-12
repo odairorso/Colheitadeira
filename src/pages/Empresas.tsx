@@ -8,24 +8,72 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Building2 } from "lucide-react";
+import { Plus, Trash2, Building2, Pencil } from "lucide-react";
 import { useEmpresas } from "@/store/useAppStore";
 import { TIPOS_EMPRESA } from "@/types/agroharvest";
 import type { Empresa } from "@/types/agroharvest";
 import { toast } from "sonner";
 
+const ESTADOS_BR = [
+  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA",
+  "MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN",
+  "RS","RO","RR","SC","SP","SE","TO",
+];
+
+const emptyForm = {
+  nome: "",
+  tipo: "pecas" as Empresa["tipo"],
+  telefone: "",
+  endereco: "",
+  cidade: "",
+  estado: "",
+  observacoes: "",
+};
+
 const EmpresasPage = () => {
-  const { empresas, addEmpresa, removeEmpresa } = useEmpresas();
+  const { empresas, addEmpresa, removeEmpresa, updateEmpresa } = useEmpresas() as any;
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ nome: "", tipo: "pecas" as Empresa["tipo"], telefone: "", endereco: "", observacoes: "" });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
+
+  const openNew = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setOpen(true);
+  };
+
+  const openEdit = (emp: Empresa) => {
+    setEditingId(emp.id);
+    setForm({
+      nome: emp.nome,
+      tipo: emp.tipo,
+      telefone: emp.telefone || "",
+      endereco: emp.endereco || "",
+      cidade: emp.cidade || "",
+      estado: emp.estado || "",
+      observacoes: emp.observacoes || "",
+    });
+    setOpen(true);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.nome.trim()) { toast.error("Nome é obrigatório"); return; }
-    addEmpresa({ id: crypto.randomUUID(), ...form, createdAt: new Date().toISOString() });
-    setForm({ nome: "", tipo: "pecas", telefone: "", endereco: "", observacoes: "" });
+
+    if (editingId) {
+      const original = empresas.find((emp: Empresa) => emp.id === editingId)!;
+      if (updateEmpresa) {
+        updateEmpresa({ ...original, ...form });
+        toast.success("Empresa atualizada!");
+      }
+    } else {
+      addEmpresa({ id: crypto.randomUUID(), ...form, createdAt: new Date().toISOString() });
+      toast.success("Empresa cadastrada!");
+    }
+
+    setForm(emptyForm);
     setOpen(false);
-    toast.success("Empresa cadastrada!");
+    setEditingId(null);
   };
 
   const tipoLabel = (t: string) => TIPOS_EMPRESA.find((x) => x.value === t)?.label || t;
@@ -36,12 +84,14 @@ const EmpresasPage = () => {
         title="Empresas"
         description="Fornecedores de peças, insumos e serviços"
         action={
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setEditingId(null); setForm(emptyForm); } }}>
             <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" />Nova Empresa</Button>
+              <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" />Nova Empresa</Button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Cadastrar Empresa</DialogTitle></DialogHeader>
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingId ? "Editar Empresa" : "Cadastrar Empresa"}</DialogTitle>
+              </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <Label>Nome *</Label>
@@ -60,17 +110,34 @@ const EmpresasPage = () => {
                 </div>
                 <div>
                   <Label>Telefone</Label>
-                  <Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} />
+                  <Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(99) 99999-9999" />
                 </div>
                 <div>
                   <Label>Endereço</Label>
-                  <Input value={form.endereco} onChange={(e) => setForm({ ...form, endereco: e.target.value })} />
+                  <Input value={form.endereco} onChange={(e) => setForm({ ...form, endereco: e.target.value })} placeholder="Rua, número, bairro" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Cidade</Label>
+                    <Input value={form.cidade} onChange={(e) => setForm({ ...form, cidade: e.target.value })} placeholder="Ex: Naviraí" />
+                  </div>
+                  <div>
+                    <Label>Estado</Label>
+                    <Select value={form.estado} onValueChange={(v) => setForm({ ...form, estado: v })}>
+                      <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
+                      <SelectContent>
+                        {ESTADOS_BR.map((uf) => (
+                          <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div>
                   <Label>Observações</Label>
                   <Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
                 </div>
-                <Button type="submit" className="w-full">Salvar</Button>
+                <Button type="submit" className="w-full">{editingId ? "Salvar Alterações" : "Salvar"}</Button>
               </form>
             </DialogContent>
           </Dialog>
@@ -93,19 +160,30 @@ const EmpresasPage = () => {
                   <TableHead>Nome</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Telefone</TableHead>
-                  <TableHead className="w-12"></TableHead>
+                  <TableHead>Cidade / Estado</TableHead>
+                  <TableHead className="w-24"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {empresas.map((e) => (
-                  <TableRow key={e.id}>
-                    <TableCell className="font-medium">{e.nome}</TableCell>
-                    <TableCell>{tipoLabel(e.tipo)}</TableCell>
-                    <TableCell>{e.telefone || "—"}</TableCell>
+                {empresas.map((emp: Empresa) => (
+                  <TableRow key={emp.id}>
+                    <TableCell className="font-medium">{emp.nome}</TableCell>
+                    <TableCell>{tipoLabel(emp.tipo)}</TableCell>
+                    <TableCell>{emp.telefone || "—"}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => { removeEmpresa(e.id); toast.success("Empresa removida"); }}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      {emp.cidade && emp.estado
+                        ? `${emp.cidade} / ${emp.estado}`
+                        : emp.cidade || emp.estado || "—"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(emp)}>
+                          <Pencil className="h-4 w-4 text-primary" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => { removeEmpresa(emp.id); toast.success("Empresa removida"); }}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -60,7 +60,15 @@ export function useEmpresas() {
     });
   }, []);
 
-  return { empresas, addEmpresa, removeEmpresa };
+  const updateEmpresa = useCallback((updated: Empresa) => {
+    setEmpresas((prev) => {
+      const next = prev.map((e) => (e.id === updated.id ? updated : e));
+      saveToStorage("agroharvest_empresas", next);
+      return next;
+    });
+  }, []);
+
+  return { empresas, addEmpresa, removeEmpresa, updateEmpresa };
 }
 
 export function useTalhoes() {

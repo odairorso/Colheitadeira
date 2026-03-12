@@ -13,6 +13,8 @@ export interface Empresa {
   tipo: "pecas" | "insumos" | "servicos" | "outros";
   telefone: string;
   endereco: string;
+  cidade?: string;
+  estado?: string;
   observacoes: string;
   createdAt: string;
 }
