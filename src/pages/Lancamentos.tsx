@@ -250,6 +250,7 @@ const LancamentosPage = () => {
                   <TableHead>Tipo</TableHead>
                   <TableHead>Categoria</TableHead>
                   <TableHead>Descrição</TableHead>
+                  <TableHead>Empresa</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead className="w-24"></TableHead>
                 </TableRow>
@@ -265,6 +266,7 @@ const LancamentosPage = () => {
                     </TableCell>
                     <TableCell>{l.categoria}</TableCell>
                     <TableCell className="max-w-[200px] truncate">{l.descricao || "—"}</TableCell>
+                    <TableCell>{l.empresaId ? empresas.find((e) => e.id === l.empresaId)?.nome || "—" : "—"}</TableCell>
                     <TableCell className="text-right font-medium">
                       R$ {l.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </TableCell>
