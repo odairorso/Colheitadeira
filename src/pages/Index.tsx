@@ -6,6 +6,8 @@ import { useTalhoes } from "@/store/useAppStore";
 import { useProdutores } from "@/store/useAppStore";
 import { useEmpresas } from "@/store/useAppStore";
 import { DollarSign, TrendingUp, TrendingDown, Wheat, Users, Building2, Map } from "lucide-react";
+import { LocalStorageMigration } from "@/components/LocalStorageMigration";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Dashboard = () => {
   const { lancamentos } = useLancamentos();
@@ -13,6 +15,7 @@ const Dashboard = () => {
   const { talhoes } = useTalhoes();
   const { produtores } = useProdutores();
   const { empresas } = useEmpresas();
+  const qc = useQueryClient();
 
   const totalReceitas = lancamentos
     .filter((l) => l.tipo === "receita")
@@ -71,6 +74,8 @@ const Dashboard = () => {
         title="Dashboard"
         description="Visão geral da sua operação agrícola"
       />
+
+      <LocalStorageMigration onDone={() => qc.invalidateQueries()} />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
         {stats.map((stat) => (
