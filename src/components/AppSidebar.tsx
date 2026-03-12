@@ -6,6 +6,7 @@ import {
   Wheat,
   Map,
   Sprout,
+  Users2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -27,6 +28,7 @@ const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Produtores", url: "/produtores", icon: Users },
   { title: "Empresas", url: "/empresas", icon: Building2 },
+  { title: "Funcionários", url: "/funcionarios", icon: Users2 },
   { title: "Lançamentos", url: "/lancamentos", icon: Receipt },
   { title: "Colheitas", url: "/colheitas", icon: Wheat },
   { title: "Talhões", url: "/talhoes", icon: Map },
@@ -84,9 +86,9 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-4">
+      <SidebarFooter className="border-t border-sidebar-border/60 p-4">
         {!collapsed && (
-          <p className="text-xs text-sidebar-muted-foreground">
+          <p className="text-xs font-medium text-sidebar-foreground/80">
             © 2026 Olimpio de Oliveira
           </p>
         )}

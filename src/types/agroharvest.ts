@@ -49,6 +49,7 @@ export interface Colheita {
   unidade: "sacas" | "toneladas" | "kg" | "arrobas";
   umidade: number;
   cultura: string;
+  valorSaca?: number;
   observacoes: string;
   createdAt: string;
 }

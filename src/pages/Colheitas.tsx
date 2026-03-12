@@ -27,6 +27,7 @@ const ColheitasPage = () => {
     unidade: "sacas" as Colheita["unidade"],
     umidade: "",
     cultura: "",
+    valorSaca: "",
     observacoes: "",
   });
 
@@ -42,10 +43,11 @@ const ColheitasPage = () => {
       unidade: form.unidade,
       umidade: form.umidade ? parseFloat(form.umidade) : 0,
       cultura: form.cultura,
+      valorSaca: form.valorSaca ? parseFloat(form.valorSaca) : undefined,
       observacoes: form.observacoes,
       createdAt: new Date().toISOString(),
     });
-    setForm({ talhaoId: "", produtorId: "", data: new Date().toISOString().split("T")[0], quantidade: "", unidade: "sacas", umidade: "", cultura: "", observacoes: "" });
+    setForm({ talhaoId: "", produtorId: "", data: new Date().toISOString().split("T")[0], quantidade: "", unidade: "sacas", umidade: "", cultura: "", valorSaca: "", observacoes: "" });
     setOpen(false);
     toast.success("Colheita registrada!");
   };
@@ -88,9 +90,15 @@ const ColheitasPage = () => {
                     </Select>
                   </div>
                 </div>
-                <div>
-                  <Label>Umidade (%)</Label>
-                  <Input type="number" step="0.1" value={form.umidade} onChange={(e) => setForm({ ...form, umidade: e.target.value })} placeholder="Ex: 14.5" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Umidade (%)</Label>
+                    <Input type="number" step="0.1" value={form.umidade} onChange={(e) => setForm({ ...form, umidade: e.target.value })} placeholder="Ex: 14.5" />
+                  </div>
+                  <div>
+                    <Label>Valor da Saca (R$)</Label>
+                    <Input type="number" step="0.01" value={form.valorSaca} onChange={(e) => setForm({ ...form, valorSaca: e.target.value })} placeholder="Ex: 125.00" />
+                  </div>
                 </div>
                 <div>
                   <Label>Data</Label>
@@ -149,6 +157,8 @@ const ColheitasPage = () => {
                   <TableHead>Data</TableHead>
                   <TableHead>Cultura</TableHead>
                   <TableHead>Quantidade</TableHead>
+                  <TableHead>Valor Saca</TableHead>
+                  <TableHead>Total (R$)</TableHead>
                   <TableHead>Umidade</TableHead>
                   <TableHead>Talhão</TableHead>
                   <TableHead>Produtor</TableHead>
@@ -161,6 +171,10 @@ const ColheitasPage = () => {
                     <TableCell>{new Date(c.data).toLocaleDateString("pt-BR")}</TableCell>
                     <TableCell className="font-medium">{c.cultura}</TableCell>
                     <TableCell>{c.quantidade.toLocaleString("pt-BR")} {unidadeLabel(c.unidade)}</TableCell>
+                    <TableCell>{c.valorSaca ? `R$ ${c.valorSaca.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}</TableCell>
+                    <TableCell className="font-semibold text-success">
+                      {c.valorSaca ? `R$ ${(c.quantidade * c.valorSaca).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}
+                    </TableCell>
                     <TableCell>{c.umidade ? `${c.umidade}%` : "—"}</TableCell>
                     <TableCell>{talhaoNome(c.talhaoId)}</TableCell>
                     <TableCell>{produtorNome(c.produtorId)}</TableCell>
