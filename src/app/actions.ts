@@ -14,16 +14,15 @@ export async function createTransaction(formData: FormData) {
   const dateStr = formData.get("date") as string;
   const hectares = formData.get("hectares") as string;
 
-  // Usa o User_ID de acordo com a seleção (simplificado)
-  const role = formData.get("role") as string;
-  // TODO: Buscar o ID correto do user baseado no banco. Fixando temporariamente para não falhar a FK.
+  const userIdStr = formData.get("userId") as string;
   
   if (!rawAmount || !categoryIdStr) {
-    return { error: "Preencha o valor e a categoria" };
+    throw new Error("Preencha o valor e a categoria");
   }
   
-  // Limpa o valor (remove R$, pontos)
-  const amount = parseFloat(rawAmount.replace(/[R$\s\.]/g, '').replace(',', '.'));
+  // HTML5 type="number" sends data using dot as decimal separator (e.g. 12.34)
+  // Fallback to replace comma if needed
+  const amount = parseFloat(rawAmount.replace(',', '.'));
 
   await db.insert(transactions).values({
     type,
@@ -32,6 +31,7 @@ export async function createTransaction(formData: FormData) {
     description,
     date: dateStr ? new Date(dateStr) : new Date(),
     hectares: hectares ? hectares : null,
+    userId: userIdStr ? userIdStr : undefined,
   });
 
   revalidatePath("/");
