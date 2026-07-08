@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/Financeiro/Documents/Colheitadeira/\"Agroharvest Ompio de Oliveira\"/src -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" \\\\\\) ! -path \"*/ui/*\" ! -path \"*/node_modules/*\" -exec wc -l {} +)",
+      "Bash(find /c/Users/Financeiro/Documents/Colheitadeira/\"Agroharvest Ompio de Oliveira\"/api -type f -name \"*.js\" -exec wc -l {} +)"
+    ]
+  }
+}
