@@ -21,4 +21,5 @@ export const transactions = pgTable('transactions', {
   date: timestamp('date', { withTimezone: true, mode: 'date' }).defaultNow(),
   hectares: decimal('hectares', { precision: 10, scale: 2 }),
   description: text('description'),
+  formaPagamento: varchar('forma_pagamento', { length: 20 }), // dinheiro | cartao | pix
 });

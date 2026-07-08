@@ -110,12 +110,37 @@ export default async function Lancamento({ params }: { params: { type: string } 
         {/* Data */}
         <div className="flex flex-col gap-2">
             <label className="text-xs font-bold uppercase tracking-widest text-neutral-400 ml-2">Data e Hora</label>
+            {/* defaultValue usa hora local para evitar bug de -1 dia pelo UTC */}
             <input 
                 type="datetime-local" 
                 name="date"
-                defaultValue={new Date().toISOString().slice(0, 16)} 
+                defaultValue={(() => {
+                  const now = new Date();
+                  const pad = (n: number) => String(n).padStart(2, '0');
+                  return `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+                })()}
                 className={`w-full bg-white/5 border border-white/5 backdrop-blur-md rounded-2xl p-5 text-white ${colors.focusBorder} outline-none transition-all font-medium`}
             />
+        </div>
+
+        {/* Forma de Pagamento */}
+        <div className="flex flex-col gap-2">
+            <label className="text-xs font-bold uppercase tracking-widest text-neutral-400 ml-2">Forma de Pagamento</label>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { value: 'dinheiro', label: '💵 Dinheiro' },
+                { value: 'cartao',   label: '💳 Cartão'   },
+                { value: 'pix',      label: '⚡ PIX'      },
+              ].map((opt) => (
+                <label key={opt.value} className="cursor-pointer group relative">
+                  <input type="radio" name="formaPagamento" value={opt.value} className="peer sr-only" />
+                  <div className={`h-full bg-white/5 border border-white/5 backdrop-blur-md rounded-2xl p-4 flex items-center justify-center text-center text-sm font-semibold text-neutral-300 ${colors.peerChecked} transition-all hover:bg-white/10`}>
+                    {opt.label}
+                  </div>
+                  <div className={`absolute top-2 right-2 w-3 h-3 rounded-full ${colors.bgBadge} opacity-0 peer-checked:opacity-100 transition-opacity`}></div>
+                </label>
+              ))}
+            </div>
         </div>
 
         {/* Detalhes / Descriçaõ */}
