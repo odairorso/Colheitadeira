@@ -106,8 +106,18 @@ export default async function Home() {
                                   {tx.categoryId ? catMap[tx.categoryId] : 'Diversos'}
                                </p>
                                <p className="text-xs text-neutral-400 font-medium mt-0.5">
-                                  {new Date(tx.date || new Date()).toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})} 
+                                  {tx.date
+                                    ? (() => {
+                                        const d = new Date(tx.date);
+                                        const local = new Date(d.getTime() + d.getTimezoneOffset() * -60000);
+                                        return local.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
+                                      })()
+                                    : '—'
+                                  }
                                   {tx.hectares ? ` • ${tx.hectares} ha` : ''}
+                                  {tx.formaPagamento === 'pix' && ' • ⚡PIX'}
+                                  {tx.formaPagamento === 'cartao' && ' • 💳Cartão'}
+                                  {tx.formaPagamento === 'dinheiro' && ' • 💵Dinheiro'}
                                </p>
                             </div>
                          </div>
