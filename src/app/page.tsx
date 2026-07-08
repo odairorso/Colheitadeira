@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { db } from "@/db";
 import { transactions, categories } from "@/db/schema";
-import { desc, eq, sum } from "drizzle-orm";
+import { desc } from "drizzle-orm";
+
+// Força página dinâmica — busca dados do banco a cada request, não no build
+export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   // Buscar totais do banco de dados // TODO: Otimizar query depois

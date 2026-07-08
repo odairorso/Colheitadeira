@@ -4,6 +4,9 @@ import { eq } from "drizzle-orm";
 import { createTransaction } from "../../actions";
 import Link from "next/link";
 
+// Força página dinâmica para não tentar pre-render no build
+export const dynamic = 'force-dynamic';
+
 export default async function Lancamento({ params }: { params: { type: string } }) {
   const resolvedParams = await params;
   const isDespesa = resolvedParams.type === "despesa";
