@@ -20,10 +20,18 @@ const emptyForm = {
   categoria: "",
   descricao: "",
   valor: "",
-  data: new Date().toISOString().split("T")[0],
+  // Gera data no fuso local para evitar bug de -1 dia
+  data: (() => { const n = new Date(); const p = (x: number) => String(x).padStart(2,"0"); return `${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())}`; })(),
+  formaPagamento: "" as "" | "dinheiro" | "cartao" | "pix",
   talhaoId: "",
   empresaId: "",
   produtorId: "",
+};
+
+// Formata data YYYY-MM-DD sem bug UTC
+const formatarData = (data: string) => {
+  const [ano, mes, dia] = data.split("-");
+  return `${dia}/${mes}/${ano}`;
 };
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
@@ -58,6 +66,7 @@ const LancamentosPage = () => {
       descricao: l.descricao || "",
       valor: String(l.valor),
       data: l.data,
+      formaPagamento: l.formaPagamento || "",
       talhaoId: l.talhaoId || "",
       empresaId: l.empresaId || "",
       produtorId: l.produtorId || "",
@@ -81,6 +90,7 @@ const LancamentosPage = () => {
         descricao: form.descricao,
         valor: parseFloat(form.valor),
         data: form.data,
+        formaPagamento: form.formaPagamento || undefined,
         talhaoId: form.talhaoId || undefined,
         empresaId: form.empresaId || undefined,
         produtorId: form.produtorId || undefined,
@@ -94,6 +104,7 @@ const LancamentosPage = () => {
         descricao: form.descricao,
         valor: parseFloat(form.valor),
         data: form.data,
+        formaPagamento: form.formaPagamento || undefined,
         talhaoId: form.talhaoId || undefined,
         empresaId: form.empresaId || undefined,
         produtorId: form.produtorId || undefined,
@@ -147,6 +158,17 @@ const LancamentosPage = () => {
                 <div>
                   <Label>Valor (R$) *</Label>
                   <Input type="number" step="0.01" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} placeholder="0,00" />
+                </div>
+                <div>
+                  <Label>Forma de Pagamento</Label>
+                  <Select value={form.formaPagamento} onValueChange={(v) => setForm({ ...form, formaPagamento: v as "" | "dinheiro" | "cartao" | "pix" })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dinheiro">💵 Dinheiro</SelectItem>
+                      <SelectItem value="cartao">💳 Cartão</SelectItem>
+                      <SelectItem value="pix">⚡ PIX</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label>Data</Label>
@@ -251,6 +273,7 @@ const LancamentosPage = () => {
                   <TableHead>Categoria</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Empresa</TableHead>
+                  <TableHead>Pagamento</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead className="w-24"></TableHead>
                 </TableRow>
@@ -258,7 +281,7 @@ const LancamentosPage = () => {
               <TableBody>
                 {lancamentos.map((l) => (
                   <TableRow key={l.id}>
-                    <TableCell>{new Date(l.data).toLocaleDateString("pt-BR")}</TableCell>
+                    <TableCell>{formatarData(l.data)}</TableCell>
                     <TableCell>
                       <Badge variant={l.tipo === "receita" ? "default" : "destructive"}>
                         {l.tipo === "receita" ? "Receita" : "Despesa"}
@@ -267,6 +290,12 @@ const LancamentosPage = () => {
                     <TableCell>{l.categoria}</TableCell>
                     <TableCell className="max-w-[200px] truncate">{l.descricao || "—"}</TableCell>
                     <TableCell>{l.empresaId ? empresas.find((e) => e.id === l.empresaId)?.nome || "—" : "—"}</TableCell>
+                    <TableCell>
+                      {l.formaPagamento === "dinheiro" && "💵 Dinheiro"}
+                      {l.formaPagamento === "cartao" && "💳 Cartão"}
+                      {l.formaPagamento === "pix" && "⚡ PIX"}
+                      {!l.formaPagamento && "—"}
+                    </TableCell>
                     <TableCell className="text-right font-medium">
                       R$ {l.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </TableCell>

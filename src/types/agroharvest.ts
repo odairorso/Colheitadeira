@@ -36,6 +36,7 @@ export interface Lancamento {
   descricao: string;
   valor: number;
   data: string;
+  formaPagamento?: "dinheiro" | "cartao" | "pix";
   talhaoId?: string;
   empresaId?: string;
   produtorId?: string;

@@ -5,7 +5,7 @@ import type { Produtor, Empresa, Talhao, Lancamento, Colheita } from "@/types/ag
 interface ProdutorRow { id: string; nome: string; telefone: string | null; endereco: string | null; observacoes: string | null; created_at: string; }
 interface EmpresaRow { id: string; nome: string; tipo: Empresa["tipo"]; telefone: string | null; endereco: string | null; cidade: string | null; estado: string | null; observacoes: string | null; created_at: string; }
 interface TalhaoRow { id: string; nome: string; area_hectares: string | number; cultura: string | null; safra: string | null; observacoes: string | null; created_at: string; }
-interface LancamentoRow { id: string; tipo: Lancamento["tipo"]; categoria: string; descricao: string | null; valor: string | number; data: string; talhao_id: string | null; empresa_id: string | null; produtor_id: string | null; created_at: string; }
+interface LancamentoRow { id: string; tipo: Lancamento["tipo"]; categoria: string; descricao: string | null; valor: string | number; data: string; forma_pagamento: string | null; talhao_id: string | null; empresa_id: string | null; produtor_id: string | null; created_at: string; }
 interface ColheitaRow { id: string; talhao_id: string | null; produtor_id: string | null; data: string; quantidade: string | number; unidade: Colheita["unidade"]; umidade: string | number | null; cultura: string; valor_saca: string | number | null; hectares: string | number | null; observacoes: string | null; created_at: string; }
 
 // ---- Generic fetch helpers ----
@@ -56,7 +56,7 @@ function mapTalhao(r: TalhaoRow): Talhao {
   return { id: r.id, nome: r.nome, area_hectares: Number(r.area_hectares) || 0, cultura: r.cultura ?? "", safra: r.safra ?? "", observacoes: r.observacoes ?? "", createdAt: r.created_at };
 }
 function mapLancamento(r: LancamentoRow): Lancamento {
-  return { id: r.id, tipo: r.tipo, categoria: r.categoria, descricao: r.descricao ?? "", valor: Number(r.valor), data: r.data, talhaoId: r.talhao_id ?? undefined, empresaId: r.empresa_id ?? undefined, produtorId: r.produtor_id ?? undefined, createdAt: r.created_at };
+  return { id: r.id, tipo: r.tipo, categoria: r.categoria, descricao: r.descricao ?? "", valor: Number(r.valor), data: r.data, formaPagamento: (r.forma_pagamento as Lancamento["formaPagamento"]) ?? undefined, talhaoId: r.talhao_id ?? undefined, empresaId: r.empresa_id ?? undefined, produtorId: r.produtor_id ?? undefined, createdAt: r.created_at };
 }
 function mapColheita(r: ColheitaRow): Colheita {
   return { id: r.id, talhaoId: r.talhao_id ?? "", produtorId: r.produtor_id ?? undefined, data: r.data, quantidade: Number(r.quantidade), unidade: r.unidade, umidade: Number(r.umidade) || 0, cultura: r.cultura, valorSaca: r.valor_saca != null ? Number(r.valor_saca) : undefined, hectares: r.hectares != null ? Number(r.hectares) : undefined, observacoes: r.observacoes ?? "", createdAt: r.created_at };
@@ -99,7 +99,7 @@ export function useTalhoes() {
 
 export function useLancamentos() {
   const qc = useQueryClient();
-  const { data: lancamentos = [], isLoading } = useQuery({ queryKey: ["lancamentos"], queryFn: async () => (await fetchJson<LancamentoRow>("/api/lancamentos")).map(mapLancamento) });
+  const { data: lancamentos = [], isLoading } = useQuery({ queryKey: ["lancamentos"], queryFn: async () => (await fetchJson<LancamentoRow>("/api/lancamentos")).map(mapLancamento), staleTime: 1000 * 60 * 5 });
 
   const addLancamento = async (l: Lancamento) => { await postJson("/api/lancamentos", l); qc.invalidateQueries({ queryKey: ["lancamentos"] }); };
   const removeLancamento = async (id: string) => { await deleteJson("/api/lancamentos", id); qc.invalidateQueries({ queryKey: ["lancamentos"] }); };
